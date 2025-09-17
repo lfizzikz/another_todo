@@ -1,0 +1,6 @@
+{% extends "layout.html" %} {% block body %}
+
+<h1>Task Added!</h1>
+{% for task in tasks %}
+<li>{{ task }}</li>
+{% endfor %} {% endblock %}
