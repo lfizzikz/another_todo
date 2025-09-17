@@ -36,9 +36,13 @@ def close_db(e=None):
 @app.route("/")
 def index():
     db = get_db()
-    rows = db.execute("SELECT title FROM tasks ORDER BY created_at DESC").fetchall()
-    tasks = [r["title"] for r in rows]
-    return render_template("index.html", tasks=tasks)
+    pending = db.execute(
+        "SELECT id, title FROM tasks WHERE completed = 0 ORDER BY created_at DESC"
+    ).fetchall()
+    done = db.execute(
+        "SELECT id, title FROM tasks WHERE completed = 1 ORDER BY created_at DESC"
+    ).fetchall()
+    return render_template("index.html", pending=pending, done=done)
 
 
 @app.route("/add", methods=["POST"])
@@ -49,3 +53,16 @@ def add():
         db.execute("INSERT INTO tasks (title) VALUES (?)", (task_name,))
         db.commit()
         return redirect(url_for("index"))
+    else:
+        return redirect(url_for("index"))
+
+
+@app.route("/tasks/<int:id>/state", methods=["POST"])
+def toggle_task_state(id):
+    value = request.form.get("completed", "0")
+    completed = 1 if value == "1" else 0
+
+    db = get_db()
+    db.execute("UPDATE tasks SET completed = ? WHERE ID = ?", (completed, id))
+    db.commit()
+    return redirect(url_for("index"))
